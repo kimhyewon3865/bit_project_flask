@@ -132,6 +132,7 @@ from flask import Flask
 from flask_restful import Resource, Api
 from flask_restful import reqparse
 from flaskext.mysql import MySQL
+from datetime import datetime
 
 # konlpy
 from collections import Counter
@@ -165,18 +166,41 @@ def get_songs():
 @app.route('/test', methods=['get','post'])
 def test():
     try:
-        
         # JSON parameter 
         parser = reqparse.RequestParser()
-        parser.add_argument('storyNo', type=str)
+        #parser.add_argument('storyNo', type=str)
         parser.add_argument('title', type=str)
         parser.add_argument('storyContent', type=str)
+
+        # 추가
+        parser.add_argument('userId', type=str)
+        
+
+
+
         args = parser.parse_args()
 
-        _storyNo = args['storyNo']
+       # _storyNo = args['storyNo']
         _title = args['title']
         _storyContent = args['storyContent']
+
+        # 추가
+        _userId = args['userId']
+
+
+
+        # DB 설정1
+        conn = mysql.connect()
+        cursor = conn.cursor()
+
+        #story insert query
+        now = datetime.now()
+        sql = 'insert into story(storycontent, regdate ,userid, title) values(%s, %s, %s, %s);'
+        cursor.execute(sql, (_storyContent, now, _userId, _title))
+        cursor.fetchall()
+        conn.commit()
         
+
         # 사연 fre1~5 변수 얻기
         nlp = Twitter() 
         nouns = nlp.nouns(_storyContent)
@@ -194,9 +218,7 @@ def test():
         # logging.warning("hyewon result: ", result, type(result[0]))
 
 
-        # DB 설정1
-        conn = mysql.connect()
-        cursor = conn.cursor()
+        
 
         # TODO: 노래 추천 알고리즘
 
@@ -238,19 +260,24 @@ def test():
         for i in range(0,3):
             print("song_id :",newRows[i][0], "score : ", newRows[i][6])
                 
-        print("storyNo: ", _storyNo)
         
+        # TODO: STORYNO 받기
+        
+        sql = 'SELECT LAST_INSERT_ID()'
+        cursor.execute(sql)
+        _storyNo = cursor.fetchall()
+        
+        print("_storyNo :: ", _storyNo[0][0])
+
+
         #업데이트
         # conn = mysql.connect()
         # cursor = conn.cursor()
         sql = 'update story set songid1 = %s, songid2 = %s, songid3 = %s where storyno = %s'
-        cursor.execute(sql, (newRows[0][0],newRows[1][0],newRows[2][0], str(_storyNo)))
+        cursor.execute(sql, (newRows[0][0],newRows[1][0],newRows[2][0], str(_storyNo[0][0])))
         cursorReturn = cursor.fetchall()
-        print("cursorReturn: ", cursorReturn)
         conn.commit()
-        #print("된건가?")
         
-        #print("스토리내용",_storyContent)
         
         return "a"
         # if len(data) is 0:
