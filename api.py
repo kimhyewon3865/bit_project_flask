@@ -278,8 +278,9 @@ def test():
         cursorReturn = cursor.fetchall()
         conn.commit()
         
-        
-        return "a"
+
+        return {'postNo' : str(_storyNo[0][0])}
+        # return "a"
         # if len(data) is 0:
         #     conn.commit()
         #     return {'StatusCode': '200', 'Message': 'User creation success'}
